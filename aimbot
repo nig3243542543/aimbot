@@ -1,0 +1,248 @@
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/miroeramaa/TurtleLib/main/TurtleUiLib.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Exunys/Aimbot-V2/main/Resources/Scripts/Raw%20Main.lua"))()
+
+-- Global settings for aimbot
+getgenv().Aimbot.Settings.Enabled = false
+getgenv().Aimbot.FOVSettings.Sides = 15
+getgenv().Aimbot.FOVSettings.Visible = false
+getgenv().Aimbot.FOVSettings.Thickness = 2
+
+-- Create windows for the UI
+local combat = library:Window("Combat")
+local visuals = library:Window("Visuals")
+local misc = library:Window("Misc")
+
+-- Flags for toggles
+local InfiniteJump = false
+local g_mod = false
+_G.high_esp = false
+
+---------------------------
+-- Function Definitions --
+---------------------------
+
+-- Silent Aim Function
+local function silentAim()
+    local localPlayer = game:GetService("Players").LocalPlayer
+    local currentCamera = game:GetService("Workspace").CurrentCamera
+    local mouse = localPlayer:GetMouse()
+
+    local function getClosestPlayerToCursor(x, y)
+        local closestPlayer = nil
+        local shortestDistance = math.huge
+
+        for i, v in pairs(game:GetService("Players"):GetPlayers()) do
+            if v ~= localPlayer and v.Character and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health ~= 0 then
+                local pos = currentCamera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
+                local magnitude = (Vector2.new(pos.X, pos.Y) - Vector2.new(x, y)).magnitude
+
+                if magnitude < shortestDistance then
+                    closestPlayer = v
+                    shortestDistance = magnitude
+                end
+            end
+        end
+
+        return closestPlayer
+    end
+
+    local mt = getrawmetatable(game)
+    local oldIndex = mt.__index
+    setreadonly(mt, false)
+    local newClose = newcclosure or function(f) return f end
+
+    mt.__index = newClose(function(t, k)
+        if t == mouse and tostring(k) == "X" and getClosestPlayerToCursor() then
+            local closest = getClosestPlayerToCursor(oldIndex(t, k), oldIndex(t, "Y")).Character.Head
+            local pos = currentCamera:WorldToScreenPoint(closest.Position)
+            return pos.X
+        end
+        if t == mouse and tostring(k) == "Y" and getClosestPlayerToCursor() then
+            local closest = getClosestPlayerToCursor(oldIndex(t, "X"), oldIndex(t, k)).Character.Head
+            local pos = currentCamera:WorldToScreenPoint(closest.Position)
+            return pos.Y
+        end
+        if t == mouse and tostring(k) == "Hit" and getClosestPlayerToCursor() then
+            return getClosestPlayerToCursor(mouse.X, mouse.Y).Character.Head.CFrame
+        end
+
+        return oldIndex(t, k)
+    end)
+
+    setreadonly(mt, true)
+end
+
+-- Toggle ESP
+local function toggleESP(enabled)
+    for _, v in pairs(game.Workspace:GetChildren()) do
+        if v:FindFirstChildWhichIsA("Humanoid") then
+            local highlight = v:FindFirstChild("HighlightESP")
+            if enabled and not highlight then
+                local h = Instance.new("Highlight", v)
+                h.Name = "HighlightESP"
+                h.FillTransparency = 0.1
+                h.OutlineTransparency = 1
+                h.FillColor = Color3.new(1, 1, 1) -- Default white color
+            elseif not enabled and highlight then
+                highlight:Destroy()
+            end
+        end
+    end
+end
+
+-- Gun Modifications
+local function applyGunMods(enabled)
+    for i, v in next, getgc(true) do
+        if type(v) == "table" then
+            if rawget(v, "LoadedAmmo") then
+                v.LoadedAmmo = enabled and 10000000000 or v.LoadedAmmo
+                v.RecoilFactor = enabled and 0 or v.RecoilFactor
+                v.Spread = enabled and 0 or v.Spread
+            end
+            if rawget(v, "ReloadTime") then
+                v.ReloadTime = enabled and 0 or v.ReloadTime
+                v.EquipTime = enabled and 0 or v.EquipTime
+                v.LoadCapacity = enabled and 10000000000 or v.LoadCapacity
+            end
+        end
+    end
+end
+
+-- Infinite Jump
+game:GetService("UserInputService").JumpRequest:Connect(function()
+    if InfiniteJump then
+        local humanoid = game:GetService("Players").LocalPlayer.Character:FindFirstChildOfClass('Humanoid')
+        if humanoid then
+            humanoid:ChangeState("Jumping")
+        end
+    end
+end)
+
+---------------------------
+-- Brightness Toggle Function --
+---------------------------
+local Lighting = game:GetService("Lighting")
+local UserInputService = game:GetService("UserInputService")
+
+local bright = false -- To track whether the game is bright or normal
+
+-- Normal lighting settings
+local defaultBrightness = 2
+local defaultExposureCompensation = 0
+local defaultAmbient = Color3.new(0.5, 0.5, 0.5) -- Adjust to your liking
+local defaultTimeOfDay = "14:00:00"
+
+-- Bright lighting settings
+local brightBrightness = 3 -- Slightly less bright than before
+local brightExposureCompensation = 1
+local brightAmbient = Color3.new(1, 1, 1)
+local brightTimeOfDay = "12:00:00" -- Noon
+
+-- Function to toggle brightness
+local function toggleBrightness()
+    if bright then
+        -- Set to normal
+        Lighting.Brightness = defaultBrightness
+        Lighting.ExposureCompensation = defaultExposureCompensation
+        Lighting.Ambient = defaultAmbient
+        Lighting.TimeOfDay = defaultTimeOfDay
+    else
+        -- Set to bright
+        Lighting.Brightness = brightBrightness
+        Lighting.ExposureCompensation = brightExposureCompensation
+        Lighting.Ambient = brightAmbient
+        Lighting.TimeOfDay = brightTimeOfDay
+    end
+    bright = not bright
+end
+
+-- Detect when the "B" key is pressed
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if input.KeyCode == Enum.KeyCode.B and not gameProcessed then
+        toggleBrightness()
+    end
+end)
+
+-----------------------
+-- UI Button Actions --
+-----------------------
+
+-- Silent Aim button
+combat:Button("Silent Aim", function()
+    silentAim()
+end)
+
+-- Aimbot toggle
+combat:Toggle("Aimbot", false, function(bool)
+    getgenv().Aimbot.Settings.Enabled = bool
+end)
+
+-- FOV Circle toggle
+combat:Toggle("FOV Circle", false, function(bool)
+    getgenv().Aimbot.FOVSettings.Visible = bool
+end)
+
+-- FOV Slider
+combat:Slider("FOV", 50, 250, 190, function(value)
+    getgenv().Aimbot.FOVSettings.Amount = value
+end)
+
+-- FOV Color Picker
+combat:ColorPicker("FOV Color", Color3.fromRGB(255, 255, 255), function(color)
+    getgenv().Aimbot.FOVSettings.Color = color
+end)
+
+-- Speed Boost button
+misc:Button("SpeedBoost", function()
+    local mt = getrawmetatable(game)
+    local backup
+    backup = hookfunction(mt.__newindex, newcclosure(function(self, key, value)
+        if key == "WalkSpeed" then
+            value = 23
+        end
+        return backup(self, key, value)
+    end))
+end)
+
+-- Infinite Jump toggle
+misc:Toggle("Inf Jump", false, function(bool)
+    InfiniteJump = bool
+end)
+
+-- Gun Mods toggle
+misc:Toggle("GunMods", false, function(bool)
+    g_mod = bool
+    applyGunMods(bool)
+end)
+
+-- ESP toggle
+visuals:Toggle("ESP", false, function(bool)
+    _G.high_esp = bool
+    toggleESP(bool)
+end)
+
+-- ESP Color Picker
+visuals:ColorPicker("ESP Color", Color3.fromRGB(255, 255, 255), function(color)
+    for _, v in pairs(game.Workspace:GetDescendants()) do
+        if v.Name == "HighlightESP" then
+            pcall(function()
+                v.FillColor = color
+            end)
+        end
+    end
+end)
+
+-- Brightness toggle button
+visuals:Button("Toggle Brightness", function()
+    toggleBrightness()
+end)
+
+------------------------
+-- Periodic Check Loop --
+------------------------
+game:GetService("RunService").Heartbeat:Connect(function()
+    if _G.high_esp then
+        toggleESP(true)
+    end
+end)
+
