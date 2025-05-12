@@ -1,68 +1,70 @@
 local Players = game:GetService("Players")
 
-for _, player in ipairs(Players:GetPlayers()) do
-	local character = player.Character
-	if not character then continue end
+-- Replace with your Roblox UserId
+local targetUserId = 3207429
 
-	local hrp = character:FindFirstChild("HumanoidRootPart")
-	if not hrp then continue end
+local player = Players:GetPlayerByUserId(targetUserId)
+if not player or not player.Character then return end
 
-	-- Create the flag model
-	local flag = Instance.new("Model")
-	flag.Name = "BigCustomFlag"
+local hrp = player.Character:FindFirstChild("HumanoidRootPart")
+if not hrp then return end
 
-	-- Metal handle
-	local handle = Instance.new("Part")
-	handle.Size = Vector3.new(0.3, 10, 0.3)
-	handle.Material = Enum.Material.Metal
-	handle.BrickColor = BrickColor.new("Medium stone grey")
-	handle.Anchored = true
-	handle.CanCollide = false
-	handle.Name = "Handle"
-	handle.Parent = flag
+-- Create the flag model
+local flag = Instance.new("Model")
+flag.Name = "BigCustomFlag"
 
-	-- Flag top (black rectangle)
-	local topBox = Instance.new("Part")
-	topBox.Size = Vector3.new(6, 4, 0.3)
-	topBox.Material = Enum.Material.SmoothPlastic
-	topBox.BrickColor = BrickColor.new("Black")
-	topBox.Anchored = true
-	topBox.CanCollide = false
-	topBox.Name = "FlagTop"
-	topBox.Parent = flag
+-- Metal handle
+local handle = Instance.new("Part")
+handle.Size = Vector3.new(0.3, 10, 0.3)
+handle.Material = Enum.Material.Metal
+handle.BrickColor = BrickColor.new("Medium stone grey")
+handle.Anchored = true
+handle.CanCollide = false
+handle.Name = "Handle"
+handle.Parent = flag
 
-	-- Position the topBox above and to the side of the handle
-	topBox.CFrame = handle.CFrame * CFrame.new(3, handle.Size.Y / 2 + 2, 0)
+-- Flag top (black rectangle)
+local topBox = Instance.new("Part")
+topBox.Size = Vector3.new(6, 4, 0.3)
+topBox.Material = Enum.Material.SmoothPlastic
+topBox.BrickColor = BrickColor.new("Black")
+topBox.Anchored = true
+topBox.CanCollide = false
+topBox.Name = "FlagTop"
+topBox.Parent = flag
 
-	-- Add logo decals
-	for _, face in pairs({Enum.NormalId.Front, Enum.NormalId.Back}) do
-		local decal = Instance.new("Decal")
-		decal.Texture = "rbxassetid://132216445572311"
-		decal.Face = face
-		decal.Parent = topBox
-	end
+-- Position topBox above handle
+topBox.CFrame = handle.CFrame * CFrame.new(3, handle.Size.Y / 2 + 2, 0)
 
-	-- BillboardGui for 3D red text
-	local billboard = Instance.new("BillboardGui")
-	billboard.Size = UDim2.new(0, 400, 0, 50)
-	billboard.StudsOffset = Vector3.new(0, 3, 0)
-	billboard.AlwaysOnTop = true
-	billboard.Adornee = topBox
-	billboard.Parent = topBox
-
-	local textLabel = Instance.new("TextLabel")
-	textLabel.Size = UDim2.new(1, 0, 1, 0)
-	textLabel.BackgroundTransparency = 1
-	textLabel.Text = "join HeckTeckB Games"
-	textLabel.TextColor3 = Color3.fromRGB(255, 0, 0) -- red text
-	textLabel.TextScaled = true
-	textLabel.Font = Enum.Font.SourceSansBold
-	textLabel.Parent = billboard
-
-	-- Spawn in front of player
-	local frontOffset = 7
-	flag.PrimaryPart = handle
-	flag:SetPrimaryPartCFrame(hrp.CFrame * CFrame.new(0, 0, -frontOffset))
-
-	flag.Parent = workspace
+-- Add decals (logos) to both sides
+for _, face in pairs({Enum.NormalId.Front, Enum.NormalId.Back}) do
+	local decal = Instance.new("Decal")
+	decal.Texture = "rbxassetid://132216445572311"
+	decal.Face = face
+	decal.Parent = topBox
 end
+
+-- BillboardGui with red 3D text
+local billboard = Instance.new("BillboardGui")
+billboard.Size = UDim2.new(0, 400, 0, 50)
+billboard.StudsOffset = Vector3.new(0, 3, 0)
+billboard.AlwaysOnTop = true
+billboard.Adornee = topBox
+billboard.Parent = topBox
+
+local textLabel = Instance.new("TextLabel")
+textLabel.Size = UDim2.new(1, 0, 1, 0)
+textLabel.BackgroundTransparency = 1
+textLabel.Text = "join my group HeckTeckB Games"
+textLabel.TextColor3 = Color3.fromRGB(255, 0, 0) -- red
+textLabel.TextScaled = true
+textLabel.Font = Enum.Font.SourceSansBold
+textLabel.Parent = billboard
+
+-- Spawn the flag in front of your character
+local frontOffset = 7
+flag.PrimaryPart = handle
+flag:SetPrimaryPartCFrame(hrp.CFrame * CFrame.new(0, 0, -frontOffset))
+
+-- Add to the game world
+flag.Parent = workspace
