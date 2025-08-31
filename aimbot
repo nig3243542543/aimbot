@@ -39,7 +39,7 @@ topBox.CFrame = handle.CFrame * CFrame.new(3, handle.Size.Y / 2 + 2, 0)
 -- Add decals (logos) to both sides
 for _, face in pairs({Enum.NormalId.Front, Enum.NormalId.Back}) do
 	local decal = Instance.new("Decal")
-	decal.Texture = "rbxassetid://132216445572311"
+	decal.Texture = "rbxassetid://165169593"
 	decal.Face = face
 	decal.Parent = topBox
 end
